@@ -3,6 +3,9 @@
 
 #include <QMainWindow>
 
+class renderArea;
+class QPushButton;
+
 namespace Ui {
 class platform;
 }
@@ -17,6 +20,22 @@ public:
 
 private:
     Ui::platform *ui;
+    QPushButton* setPath;
+    QPushButton* computeDataGenerate;
+    QPushButton* geoDataGenerate;
+    QPushButton* getLoadBoundary;
+    QPushButton* loadInterpCompute;
+    QPushButton* coldHotTranfer;
+    QPushButton* showResult;
+    QPushButton* editCutPlane;
+    QPushButton* cutPlane;
+    QPushButton* showCuttingPath;
+    QPushButton* prePath;
+    QPushButton* nextPath;
+    QString icemPath;
+    QString ansysPath;
+    QString proName;
+    renderArea* canvas;
 };
 
 #endif // PLATFORM_H

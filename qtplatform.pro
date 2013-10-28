@@ -13,8 +13,10 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        platform.cpp
+        platform.cpp \
+    renderarea.cpp
 
-HEADERS  += platform.h
+HEADERS  += platform.h \
+    renderarea.h
 
 FORMS    += platform.ui
