@@ -7,10 +7,13 @@
 #include "mybutton.h"
 #include "setpathdialog.h"
 
+
 platform::platform(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::platform)
+    ui(new Ui::platform),
+    configFile(tr("/config.txt"))
 {
+    load_path_from_file();
     ui->setupUi(this);
     ui_init();
     ui_set_contraints();
@@ -98,7 +101,42 @@ void platform::ui_set_contraints(){
 
 void platform::set_path(){
     setPathDialog dlg(this);
+    dlg.ansys = ansysPath;
+    dlg.icem = icemPath;
+    dlg.ansys_edit->setText(ansysPath);
+    dlg.icem_edit->setText(icemPath);
     if(dlg.exec() == QDialog::Accepted){
-        QMessageBox::information(this, tr("hello"), tr("world"));
+        ansysPath = dlg.ansys;
+        icemPath = dlg.icem;
+    }
+    //Todo: save config
+    save_path_to_file();
+}
+
+void platform::load_path_from_file(){
+    QFile file(qApp->applicationDirPath() + configFile);
+    if(file.exists()){
+        if (!file.open(QIODevice::ReadOnly)) {
+            //error message
+            QMessageBox::critical(this, tr("Read Error"),
+                               tr("Error when reading config!"));
+        }
+        else {
+            QTextStream fin(&file);
+            ansysPath = fin.readLine();
+            icemPath = fin.readLine();
+            file.close();
+        }
+    }
+}
+
+void platform::save_path_to_file(){
+    QFile file(qApp->applicationDirPath() + configFile);
+    if (file.open(QIODevice::WriteOnly|QIODevice::Text)) {
+        QTextStream fout(&file);
+        fout << ansysPath << endl;
+        fout << icemPath;
+        fout.flush();
+        file.close();
     }
 }

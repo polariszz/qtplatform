@@ -27,6 +27,8 @@ private:
     void ui_init();
     void ui_connect_function();
     void ui_set_contraints();
+    void save_path_to_file();
+    void load_path_from_file();
 
 //members
 private:
@@ -47,6 +49,7 @@ private:
     QString ansysPath;
     QString proName;
     renderArea* canvas;
+    const QString configFile;
 };
 
 #endif // PLATFORM_H
