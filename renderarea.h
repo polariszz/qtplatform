@@ -11,12 +11,15 @@ public:
 public slots:
     void setPaintPath(QPainterPath &path);
     void setRotationAngle(int angle);
+
 protected:
     void paintEvent(QPaintEvent *event);
 
 private:
     QPainterPath path;
     int rotationAngle;
+    void showText();
+    void showPath();
 };
 
 

@@ -4,7 +4,7 @@
 #include <QMainWindow>
 
 class renderArea;
-class QPushButton;
+class myButton;
 
 namespace Ui {
 class platform;
@@ -18,20 +18,31 @@ public:
     explicit platform(QWidget *parent = 0);
     ~platform();
 
+//methods
+
+public slots:
+    void set_path();
+
+private:
+    void ui_init();
+    void ui_connect_function();
+    void ui_set_contraints();
+
+//members
 private:
     Ui::platform *ui;
-    QPushButton* setPath;
-    QPushButton* computeDataGenerate;
-    QPushButton* geoDataGenerate;
-    QPushButton* getLoadBoundary;
-    QPushButton* loadInterpCompute;
-    QPushButton* coldHotTranfer;
-    QPushButton* showResult;
-    QPushButton* editCutPlane;
-    QPushButton* cutPlane;
-    QPushButton* showCuttingPath;
-    QPushButton* prePath;
-    QPushButton* nextPath;
+    myButton* setPath;
+    myButton* computeDataGenerate;
+    myButton* geoDataGenerate;
+    myButton* getLoadBoundary;
+    myButton* loadInterpCompute;
+    myButton* coldHotTranfer;
+    myButton* showResult;
+    myButton* editCutPlane;
+    myButton* cutPlane;
+    myButton* showCuttingPath;
+    myButton* prePath;
+    myButton* nextPath;
     QString icemPath;
     QString ansysPath;
     QString proName;

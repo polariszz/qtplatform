@@ -14,9 +14,15 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         platform.cpp \
-    renderarea.cpp
+    renderarea.cpp \
+    mybutton.cpp \
+    local.cpp \
+    setpathdialog.cpp
 
 HEADERS  += platform.h \
-    renderarea.h
+    renderarea.h \
+    mybutton.h \
+    local.h \
+    setpathdialog.h
 
 FORMS    += platform.ui
