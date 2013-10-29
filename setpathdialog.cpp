@@ -7,8 +7,11 @@ setPathDialog::setPathDialog(QWidget *parent) :
     QLabel *ansys_label = new QLabel(tr("ANSYS:"));
     icem_edit = new QLineEdit();
     ansys_edit = new QLineEdit();
+    icem_edit->setFixedWidth(200);
     QPushButton *icem_button = new QPushButton(QStringLiteral("设置"));
     QPushButton *ansys_button = new QPushButton(QStringLiteral("设置"));
+    connect(ansys_button, SIGNAL(clicked()), this, SLOT(getAnsysPath()));
+    connect(icem_button, SIGNAL(clicked()), this, SLOT(getICEMPath()));
 
     QGridLayout* setPathLayout = new QGridLayout;
     setPathLayout->addWidget(ansys_label, 0, 0);
@@ -28,4 +31,30 @@ setPathDialog::setPathDialog(QWidget *parent) :
     mainLayout->addLayout(setPathLayout);
     mainLayout->addWidget(buttonBox);
     setLayout(mainLayout);
+    this->setWindowTitle(QStringLiteral("设置路径"));
+}
+
+void setPathDialog::getAnsysPath(){
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    QStringLiteral("设置Ansys路径"),
+                                                    ansys,
+                                                    tr("Exec (*.exe *.bat)"));
+    if(!fileName.isEmpty())
+    {
+        ansys_edit->setText(fileName);
+        ansys = fileName;
+    }
+
+}
+
+void setPathDialog::getICEMPath(){
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    QStringLiteral("设置ICEM路径"),
+                                                    icem,
+                                                    tr("Exec (*.exe *.bat)"));
+    if(!fileName.isEmpty())
+    {
+        icem_edit->setText(fileName);
+        icem = fileName;
+    }
 }

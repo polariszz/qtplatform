@@ -12,7 +12,9 @@ public:
 
 signals:
 
-public slots:
+private slots:
+    void getAnsysPath();
+    void getICEMPath();
 private:
     QLineEdit *icem_edit;
     QLineEdit *ansys_edit;
