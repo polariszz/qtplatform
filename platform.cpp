@@ -106,6 +106,7 @@ void platform::ui_connect_function(){
 void platform::closeEvent(QCloseEvent *){
     if (!prjName.isEmpty()) {
         save_project_file();
+        save_path_to_file();
     }
 }
 
@@ -141,6 +142,7 @@ void platform::load_path_from_file(){
             QTextStream fin(&file);
             ansysPath = fin.readLine();
             icemPath = fin.readLine();
+            recentPrjPath = fin.readLine();
             file.close();
         }
     }
@@ -151,7 +153,8 @@ void platform::save_path_to_file(){
     if (file.open(QIODevice::WriteOnly|QIODevice::Text)) {
         QTextStream fout(&file);
         fout << ansysPath << endl;
-        fout << icemPath;
+        fout << icemPath << endl;
+        fout << prjPath << endl;
         fout.flush();
         file.close();
     }
@@ -175,9 +178,10 @@ void platform::generate_path(QString fileName){
 
 void platform::on_actionNew_triggered()
 {
+    QString path = prjFullName.isEmpty()? recentPrjPath : prjFullName;
     QString fileName = QFileDialog::getSaveFileName(this,
                                                     QStringLiteral("新建文件"),
-                                                    prjFullName,
+                                                    path,
                                                     LOCAL()->fileFilter
                                                     );
     if (!fileName.isEmpty()) {
@@ -239,9 +243,10 @@ void platform::setWinTitle(){
 
 void platform::on_actionOpen_triggered()
 {
+    QString path = prjPath.isEmpty() ? recentPrjPath : prjPath;
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     QStringLiteral("打开文件"),
-                                                    prjPath,
+                                                    path,
                                                     LOCAL()->fileFilter
                                                     );
     if (!fileName.isEmpty()) {

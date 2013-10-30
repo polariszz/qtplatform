@@ -69,7 +69,10 @@ private:
     QString prjFullName;
     QString prjDirPath;
 
+    QString recentPrjPath;
+
     QString icem_file;
+
 };
 
 #endif // PLATFORM_H
