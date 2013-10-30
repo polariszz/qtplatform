@@ -257,3 +257,14 @@ void platform::on_actionOpen_triggered()
         enable_buttons();
     }
 }
+
+void platform::on_actionAbout_triggered()
+{
+    QString aboutMsg = tr(" Title   :\tQt Computing Platform \n") +
+            tr("Author:\tpolariszz \n") +
+            tr("Code  :\thttps://github.com/polariszz/qtplatform \n\n") +
+            tr("If you have any question or suggestion about this platform, feel free to contact me by ") +
+            tr("beijixing266@gmail.com . :)");
+
+    QMessageBox::about(this, QStringLiteral("关于..."), aboutMsg);
+}
