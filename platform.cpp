@@ -12,7 +12,7 @@
 platform::platform(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::platform),
-    configFile(tr("/config.txt"))
+    configFile(tr("/path.conf"))
 {
     load_path_from_file();
     ui->setupUi(this);
@@ -154,7 +154,8 @@ void platform::save_path_to_file(){
         QTextStream fout(&file);
         fout << ansysPath << endl;
         fout << icemPath << endl;
-        fout << prjPath << endl;
+        if (!prjPath.isEmpty()) recentPrjPath = prjPath;
+        fout << recentPrjPath << endl;
         fout.flush();
         file.close();
     }
