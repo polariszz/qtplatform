@@ -2,7 +2,7 @@
 #define PLATFORM_H
 
 #include <QMainWindow>
-
+#include <QtWidgets>
 class renderArea;
 class myButton;
 
@@ -17,11 +17,18 @@ class platform : public QMainWindow
 public:
     explicit platform(QWidget *parent = 0);
     ~platform();
-
+    void closeEvent(QCloseEvent *);
 //methods
 
 public slots:
     void set_path();
+
+private slots:
+    void on_actionNew_triggered();
+
+    void on_actionSave_triggered();
+
+    void on_actionOpen_triggered();
 
 private:
     void ui_init();
@@ -29,6 +36,11 @@ private:
     void ui_set_contraints();
     void save_path_to_file();
     void load_path_from_file();
+    void enable_buttons();
+    void generate_path(QString fileName);
+    void setWinTitle();
+    void read_project_file();
+    void save_project_file();
 
 //members
 private:
@@ -45,11 +57,19 @@ private:
     myButton* showCuttingPath;
     myButton* prePath;
     myButton* nextPath;
+    QList<QPushButton*> btnList;
     QString icemPath;
     QString ansysPath;
     QString proName;
     renderArea* canvas;
     const QString configFile;
+
+    QString prjName;
+    QString prjPath;
+    QString prjFullName;
+    QString prjDirPath;
+
+    QString icem_file;
 };
 
 #endif // PLATFORM_H

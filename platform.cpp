@@ -6,6 +6,7 @@
 #include "renderarea.h"
 #include "mybutton.h"
 #include "setpathdialog.h"
+#include "local.h"
 
 
 platform::platform(QWidget *parent) :
@@ -87,10 +88,25 @@ void platform::ui_init(){
 
     ui->centralWidget->setLayout(mainLayout);
     this->setWindowTitle(QStringLiteral("计算平台"));
+
+
+    btnList << setPath << computeDataGenerate << geoDataGenerate << getLoadBoundary
+            << loadInterpCompute << coldHotTranfer << showResult << editCutPlane
+            << cutPlane << showCuttingPath;
+    foreach (QWidget* w, btnList) {
+        if (w != setPath)
+            w->setDisabled(true);
+    }
 }
 
 void platform::ui_connect_function(){
     connect(setPath, SIGNAL(clicked()), this, SLOT(set_path()));
+}
+
+void platform::closeEvent(QCloseEvent *){
+    if (!prjName.isEmpty()) {
+        save_project_file();
+    }
 }
 
 void platform::ui_set_contraints(){
@@ -138,5 +154,100 @@ void platform::save_path_to_file(){
         fout << icemPath;
         fout.flush();
         file.close();
+    }
+}
+
+void platform::generate_path(QString fileName){
+    if (!fileName.isEmpty()){
+        prjFullName = fileName;
+        QStringList qlist = prjFullName.split('/');
+        prjName = qlist.back().split('.').at(0);
+        qlist.pop_back();
+        prjPath = qlist.join('/');
+        prjDirPath = prjPath + tr("/dir_") + prjName;
+        if (!QDir(prjDirPath).exists()) {
+            QDir(prjPath).mkdir(tr("dir_") + prjName);
+        }
+        qDebug() << "prjDirPath exists:" << QDir(prjDirPath).exists();
+        QDir::setCurrent(prjDirPath);
+    }
+}
+
+void platform::on_actionNew_triggered()
+{
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    QStringLiteral("新建文件"),
+                                                    prjFullName,
+                                                    LOCAL()->fileFilter
+                                                    );
+    if (!fileName.isEmpty()) {
+        generate_path(fileName);
+        on_actionSave_triggered();
+        setWinTitle();
+        enable_buttons();
+    }
+    qDebug() << "current Path" << QDir::currentPath();
+
+}
+
+
+void platform::on_actionSave_triggered()
+{
+    if (prjName.isEmpty()) {
+        qDebug() << "prjName empty, ready to open newFile Dialog";
+        on_actionNew_triggered();
+    }
+    else {
+        save_project_file();
+    }
+}
+
+void platform::save_project_file() {
+    qDebug() << "saveing project file ...";
+    QFile file(prjFullName);
+    if (file.open(QIODevice::WriteOnly|QIODevice::Text)) {
+        QTextStream fout(&file);
+        fout << icem_file << endl;
+        file.close();
+    }
+}
+
+void platform::read_project_file() {
+    QFile file(prjFullName);
+    if (file.open(QIODevice::ReadOnly)) {
+        QTextStream fin(&file);
+        icem_file = fin.readLine();
+        file.close();
+    }
+}
+
+void platform::enable_buttons()
+{
+    foreach (QWidget* w, btnList) {
+        w->setEnabled(true);
+    }
+}
+
+void platform::setWinTitle(){
+    if(prjName.isEmpty()){
+        this->setWindowTitle(QStringLiteral("计算平台"));
+    }
+    else {
+        this->setWindowTitle(QStringLiteral("计算平台 project:") + prjName);
+    }
+}
+
+void platform::on_actionOpen_triggered()
+{
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    QStringLiteral("打开文件"),
+                                                    prjPath,
+                                                    LOCAL()->fileFilter
+                                                    );
+    if (!fileName.isEmpty()) {
+        generate_path(fileName);
+        read_project_file();
+        setWinTitle();
+        enable_buttons();
     }
 }

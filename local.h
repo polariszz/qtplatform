@@ -13,6 +13,7 @@ public:
     const QString welcomeInfo2;
     const QPen welcomePen;
     const QFont textFont;
+    const QString fileFilter;
 };
 
 local* LOCAL();
