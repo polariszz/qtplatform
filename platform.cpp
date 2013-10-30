@@ -3,7 +3,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-#include "renderArea.h"
+#include "renderarea.h"
 #include "mybutton.h"
 #include "setpathdialog.h"
 
@@ -119,7 +119,7 @@ void platform::load_path_from_file(){
         if (!file.open(QIODevice::ReadOnly)) {
             //error message
             QMessageBox::critical(this, tr("Read Error"),
-                               tr("Error when reading config!"));
+                                  tr("Error when reading config!"));
         }
         else {
             QTextStream fin(&file);
