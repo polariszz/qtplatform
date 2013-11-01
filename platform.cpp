@@ -7,13 +7,12 @@
 #include "mybutton.h"
 #include "setpathdialog.h"
 #include "local.h"
-#include <qtextcodec>
 
 
 platform::platform(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::platform),
-    configFile(tr("/path.txt"))
+    configFile(tr("/path.conf"))
 {
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("utf8"));
     load_path_from_file();
@@ -29,6 +28,17 @@ platform::~platform()
     delete ui;
 }
 
+void platform::on_actionAbout_triggered()
+{
+    QString aboutMsg = tr(" Title   :\tQt Computing Platform \n") +
+            tr("Author:\tpolariszz \n") +
+            tr("Code  :\thttps://github.com/polariszz/qtplatform \n\n") +
+            tr("If you have any question or suggestion about this platform, feel free to contact me by ") +
+            tr("beijixing266@gmail.com . :)");
+
+    QMessageBox::about(this, QStringLiteral("关于..."), aboutMsg);
+}
+
 void platform::ui_init(){
     QGroupBox* preProcess = new QGroupBox(QStringLiteral("前处理模块"));
     setPath = new myButton(QStringLiteral("设置路径"));
@@ -39,6 +49,7 @@ void platform::ui_init(){
     QVBoxLayout *preProcessLayout = new QVBoxLayout();
     preProcessLayout->addWidget(setPath);
     preProcessLayout->addWidget(computeDataGenerate);
+    preProcessLayout->addWidget(geoDataGenerate);
     preProcessLayout->addWidget(getLoadBoundary);
     preProcessLayout->addWidget(loadInterpCompute);
     preProcess->setLayout(preProcessLayout);
@@ -104,6 +115,7 @@ void platform::ui_init(){
 void platform::ui_connect_function(){
     connect(setPath, SIGNAL(clicked()), this, SLOT(set_path()));
     connect(computeDataGenerate, SIGNAL(clicked()), this, SLOT(on_computeDataGenerate()));
+    connect(geoDataGenerate, SIGNAL(clicked()), this, SLOT(on_geoDataGenerate()));
 }
 
 void platform::closeEvent(QCloseEvent *){
@@ -235,6 +247,7 @@ void platform::read_project_file() {
         QTextStream fin(&file);
         fin.setCodec(code);
         icem_file = fin.readLine();
+        modelName = icem_file.split('/').back().split('.').front();
         file.close();
     }
 }
@@ -271,16 +284,7 @@ void platform::on_actionOpen_triggered()
     }
 }
 
-void platform::on_actionAbout_triggered()
-{
-    QString aboutMsg = tr(" Title   :\tQt Computing Platform \n") +
-            tr("Author:\tpolariszz \n") +
-            tr("Code  :\thttps://github.com/polariszz/qtplatform \n\n") +
-            tr("If you have any question or suggestion about this platform, feel free to contact me by ") +
-            tr("beijixing266@gmail.com . :)");
 
-    QMessageBox::about(this, QStringLiteral("关于..."), aboutMsg);
-}
 
 wchar_t* platform::to_wchar(QString s){
     wchar_t* ret = new wchar_t[s.size()+1];
@@ -301,13 +305,69 @@ void platform::on_computeDataGenerate()
                                                         QStringLiteral("ICEM文件 .prj"),
                                                         icem_file,
                                                         tr("prj Files (*.prj)"));
+        qDebug() << "modelName: " << modelName;
         if(!fileName.isEmpty()){
+            canvas->showComputing();
             icem_file = fileName;
+            modelName = fileName.split('/').back().split('.').front();
             qDebug() << "icem_path: " << icemPath;
             qDebug() << "icem_file: " << icem_file;
 
             QProcess *p = new QProcess(this);
             p->start(icemPath, QStringList() << icem_file);
+            canvas->showText();
         }
     }
+}
+
+void platform::on_geoDataGenerate(){
+    qDebug() << "geoDataGenerate()";
+
+    if (modelName.isEmpty()) {
+        QMessageBox::critical(this, tr("Error"),
+                              R("请先生成计算数据。")
+                              );
+    }
+    QTextCodec *code = QTextCodec::codecForName("gbk");
+    QFile ansys_APDL_file(prjDirPath + tr("/") + modelName + tr("_ansys_get.txt"));
+//    if (!ansys_APDL_file.exists()) {
+    {
+        QFile apdl_local(qApp->applicationDirPath() + tr("/local/local_ansys_get.txt"));
+
+        if (!apdl_local.exists()){
+            QMessageBox::critical(this, tr("Error: file lost"),
+                                  tr("File local/local_ansys_get.txt lost.")
+                                  );
+            return;
+        }
+        if (apdl_local.open(QIODevice::ReadOnly)) {
+            //read and replace
+            QTextStream in(&apdl_local);
+            in.setCodec(code);
+            QString script = in.readAll().replace(tr("MODELNAMEPLACEHOLDER"), modelName);
+            apdl_local.close();
+
+            //writing file.
+            if (ansys_APDL_file.open(QIODevice::WriteOnly|QIODevice::Text)) {
+
+                QTextStream fout(&ansys_APDL_file);
+                fout.setCodec(code);
+                fout << script;
+                fout.flush();
+                ansys_APDL_file.close();
+            }
+        }
+        else {
+            QMessageBox::critical(this, tr("Error: open file"),
+                                  tr("Error happens when loading local_apdl_get.txt.")
+                                  );
+        }
+
+    }
+    qDebug() << "apdl file generated...";
+
+    canvas->showComputing();
+    QProcess::execute(ansysPath, QStringList() << "-g" << "-dir" << prjDirPath);
+    canvas->showText();
+    QMessageBox::information(this, tr("Done"), tr("Computing completely."));
 }

@@ -3,7 +3,8 @@
 
 
 renderArea::renderArea(QWidget *parent) :
-    QWidget(parent)
+    QWidget(parent),
+    state(SHOW_TEXT)
 {
     this->setMinimumWidth(350);
     path = QPainterPath();
@@ -19,20 +20,17 @@ void renderArea::setRotationAngle(int angle){
 }
 
 void renderArea::paintEvent(QPaintEvent*){
-    /*
-    QPainterPath path;
-    path.moveTo(20, 80);
-    path.lineTo(20, 30);
-    path.cubicTo(80, 0, 50, 50, 80, 80);
-    QPainter painter(this);
-    painter.drawPath(path);
-    painter.drawText(this->rect(), LOCAL()->welcomeInfo1);
-    */
-    showText();
+
+    switch(state) {
+    case SHOW_TEXT : drawText();break;
+    case SHOW_PATH : drawPath();break;
+    case SHOW_COMPUTING : drawComputing();break;
+    default : drawText();
+    }
 }
 
 
-void renderArea::showText(){
+void renderArea::drawText(){
     QPainter painter(this);
     painter.setPen(LOCAL()->welcomePen);
     painter.setFont(LOCAL()->textFont);
@@ -44,6 +42,32 @@ void renderArea::showText(){
 
 }
 
-void renderArea::showPath(){
+void renderArea::drawComputing(){
+    QPainter painter(this);
+    painter.setPen(LOCAL()->welcomePen);
+    painter.setFont(LOCAL()->computingFont);
+    QRect r = this->rect();
+    QRect top(r.left(), r.top(), r.width(), r.height()/3*2);
+    QRect bottom(r.left(), r.top()+r.height()/3, r.width(), r.height()/3*2);
+    painter.drawText(top, Qt::AlignHCenter|Qt::AlignVCenter ,LOCAL()->computingText1);
+    painter.drawText(bottom, Qt::AlignHCenter|Qt::AlignVCenter, LOCAL()->computingText2);
+}
 
+void renderArea::drawPath(){
+
+}
+
+void renderArea::showText(){
+    state = SHOW_TEXT;
+    repaint();
+}
+
+void renderArea::showPath() {
+    state = SHOW_PATH;
+    repaint();
+}
+
+void renderArea::showComputing() {
+    state = SHOW_COMPUTING;
+    repaint();
 }

@@ -15,11 +15,19 @@ public slots:
 protected:
     void paintEvent(QPaintEvent *event);
 
-private:
-    QPainterPath path;
-    int rotationAngle;
+public:
     void showText();
     void showPath();
+    void showComputing();
+
+private:
+    enum {SHOW_TEXT, SHOW_COMPUTING, SHOW_PATH };
+    int state;
+    QPainterPath path;
+    int rotationAngle;
+    void drawText();
+    void drawPath();
+    void drawComputing();
 };
 
 

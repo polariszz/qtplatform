@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QtWidgets>
+
 class renderArea;
 class myButton;
 
@@ -29,7 +30,7 @@ private slots:
     void on_actionOpen_triggered();
     void on_actionAbout_triggered();
     void on_computeDataGenerate();
-
+    void on_geoDataGenerate();
 private:
     void ui_init();
     void ui_connect_function();
@@ -73,7 +74,7 @@ private:
     QString recentPrjPath;
 
     QString icem_file;
-
+    QString modelName;
 };
 
 #endif // PLATFORM_H
