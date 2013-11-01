@@ -26,3 +26,5 @@ HEADERS  += platform.h \
     setpathdialog.h
 
 FORMS    += platform.ui
+
+RC_FILE = platform.rc
