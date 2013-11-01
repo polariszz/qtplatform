@@ -25,12 +25,10 @@ public slots:
 
 private slots:
     void on_actionNew_triggered();
-
     void on_actionSave_triggered();
-
     void on_actionOpen_triggered();
-
     void on_actionAbout_triggered();
+    void on_computeDataGenerate();
 
 private:
     void ui_init();
@@ -43,6 +41,7 @@ private:
     void setWinTitle();
     void read_project_file();
     void save_project_file();
+    wchar_t* to_wchar(QString);
 
 //members
 private:

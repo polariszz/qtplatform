@@ -51,7 +51,7 @@ void setPathDialog::getICEMPath(){
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     QStringLiteral("设置ICEM路径"),
                                                     icem,
-                                                    tr("Exec (*.exe *.bat)"));
+                                                    tr("Bat (*.exe *.bat)"));
     if(!fileName.isEmpty())
     {
         icem_edit->setText(fileName);

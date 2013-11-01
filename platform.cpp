@@ -7,13 +7,15 @@
 #include "mybutton.h"
 #include "setpathdialog.h"
 #include "local.h"
+#include <qtextcodec>
 
 
 platform::platform(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::platform),
-    configFile(tr("/path.conf"))
+    configFile(tr("/path.txt"))
 {
+    QTextCodec::setCodecForLocale(QTextCodec::codecForName("utf8"));
     load_path_from_file();
     ui->setupUi(this);
     ui_init();
@@ -101,6 +103,7 @@ void platform::ui_init(){
 
 void platform::ui_connect_function(){
     connect(setPath, SIGNAL(clicked()), this, SLOT(set_path()));
+    connect(computeDataGenerate, SIGNAL(clicked()), this, SLOT(on_computeDataGenerate()));
 }
 
 void platform::closeEvent(QCloseEvent *){
@@ -130,7 +133,9 @@ void platform::set_path(){
     save_path_to_file();
 }
 
+
 void platform::load_path_from_file(){
+    QTextCodec *code = QTextCodec::codecForName("utf8");
     QFile file(qApp->applicationDirPath() + configFile);
     if(file.exists()){
         if (!file.open(QIODevice::ReadOnly)) {
@@ -140,6 +145,7 @@ void platform::load_path_from_file(){
         }
         else {
             QTextStream fin(&file);
+            fin.setCodec(code);
             ansysPath = fin.readLine();
             icemPath = fin.readLine();
             recentPrjPath = fin.readLine();
@@ -149,9 +155,11 @@ void platform::load_path_from_file(){
 }
 
 void platform::save_path_to_file(){
+    QTextCodec *code = QTextCodec::codecForName("utf8");
     QFile file(qApp->applicationDirPath() + configFile);
     if (file.open(QIODevice::WriteOnly|QIODevice::Text)) {
         QTextStream fout(&file);
+        fout.setCodec(code);
         fout << ansysPath << endl;
         fout << icemPath << endl;
         if (!prjPath.isEmpty()) recentPrjPath = prjPath;
@@ -180,6 +188,7 @@ void platform::generate_path(QString fileName){
 void platform::on_actionNew_triggered()
 {
     QString path = prjFullName.isEmpty()? recentPrjPath : prjFullName;
+    qDebug() << "loading path:" << path;
     QString fileName = QFileDialog::getSaveFileName(this,
                                                     QStringLiteral("新建文件"),
                                                     path,
@@ -209,18 +218,22 @@ void platform::on_actionSave_triggered()
 
 void platform::save_project_file() {
     qDebug() << "saveing project file ...";
+    QTextCodec *code = QTextCodec::codecForName("utf8");
     QFile file(prjFullName);
     if (file.open(QIODevice::WriteOnly|QIODevice::Text)) {
         QTextStream fout(&file);
+        fout.setCodec(code);
         fout << icem_file << endl;
         file.close();
     }
 }
 
 void platform::read_project_file() {
+    QTextCodec *code = QTextCodec::codecForName("utf8");
     QFile file(prjFullName);
     if (file.open(QIODevice::ReadOnly)) {
         QTextStream fin(&file);
+        fin.setCodec(code);
         icem_file = fin.readLine();
         file.close();
     }
@@ -267,4 +280,34 @@ void platform::on_actionAbout_triggered()
             tr("beijixing266@gmail.com . :)");
 
     QMessageBox::about(this, QStringLiteral("关于..."), aboutMsg);
+}
+
+wchar_t* platform::to_wchar(QString s){
+    wchar_t* ret = new wchar_t[s.size()+1];
+    int temp = s.toWCharArray(ret);
+    ret[temp] = 0;
+    return ret;
+}
+
+void platform::on_computeDataGenerate()
+{
+    qDebug() << "icem_file: " << icem_file;
+    //it don't need to check whether it is empty.
+    //otherwise we cannot change the icem_file if choosen.
+    //if (icem_file.isEmpty()){
+
+    {
+        QString fileName = QFileDialog::getOpenFileName(this,
+                                                        QStringLiteral("ICEM文件 .prj"),
+                                                        icem_file,
+                                                        tr("prj Files (*.prj)"));
+        if(!fileName.isEmpty()){
+            icem_file = fileName;
+            qDebug() << "icem_path: " << icemPath;
+            qDebug() << "icem_file: " << icem_file;
+
+            QProcess *p = new QProcess(this);
+            p->start(icemPath, QStringList() << icem_file);
+        }
+    }
 }
