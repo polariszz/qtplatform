@@ -130,6 +130,13 @@ void platform::ui_set_contraints(){
     this->setMaximumHeight(500);
 }
 
+bool platform::path_is_set_or_warning(){
+    if (ansysPath.isEmpty() || icemPath.isEmpty()) {
+        QMessageBox::critical(this, tr("Warning"), R("计算前请先设置Ansys及ICEM路径"));
+        return false;
+    }
+    return true;
+}
 
 void platform::set_path(){
     setPathDialog dlg(this);
@@ -295,6 +302,8 @@ wchar_t* platform::to_wchar(QString s){
 
 void platform::on_computeDataGenerate()
 {
+    if (!path_is_set_or_warning())
+        return;
     qDebug() << "icem_file: " << icem_file;
     //it don't need to check whether it is empty.
     //otherwise we cannot change the icem_file if choosen.
@@ -321,12 +330,13 @@ void platform::on_computeDataGenerate()
 }
 
 void platform::on_geoDataGenerate(){
+    if (!path_is_set_or_warning())
+        return;
     qDebug() << "geoDataGenerate()";
 
     if (modelName.isEmpty()) {
-        QMessageBox::critical(this, tr("Error"),
-                              R("请先生成计算数据。")
-                              );
+        QMessageBox::critical(this, tr("Error"), R("请先生成计算数据。"));
+        return;
     }
     QTextCodec *code = QTextCodec::codecForName("gbk");
     QFile ansys_APDL_file(prjDirPath + tr("/") + modelName + tr("_ansys_get.txt"));
@@ -335,9 +345,7 @@ void platform::on_geoDataGenerate(){
         QFile apdl_local(qApp->applicationDirPath() + tr("/local/local_ansys_get.txt"));
 
         if (!apdl_local.exists()){
-            QMessageBox::critical(this, tr("Error: file lost"),
-                                  tr("File local/local_ansys_get.txt lost.")
-                                  );
+            QMessageBox::critical(this, tr("Error: file lost"),tr("File local/local_ansys_get.txt lost."));
             return;
         }
         if (apdl_local.open(QIODevice::ReadOnly)) {

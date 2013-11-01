@@ -24,6 +24,7 @@ public:
 public slots:
     void set_path();
 
+//slots
 private slots:
     void on_actionNew_triggered();
     void on_actionSave_triggered();
@@ -31,6 +32,8 @@ private slots:
     void on_actionAbout_triggered();
     void on_computeDataGenerate();
     void on_geoDataGenerate();
+
+//private methods
 private:
     void ui_init();
     void ui_connect_function();
@@ -43,6 +46,8 @@ private:
     void read_project_file();
     void save_project_file();
     wchar_t* to_wchar(QString);
+    //make sure ansys and icem path is set.
+    bool path_is_set_or_warning();
 
 //members
 private:
