@@ -393,10 +393,7 @@ void platform::on_geoDataGenerate(){
     qDebug() << "apdl file generated...";
 
     canvas->showComputing();
-    QProcess *p = new QProcess(this);
-    p->start(ansysPath, QStringList() << "-g" << "-dir" << prjDirPath);
-    p->waitForFinished();
-    canvas->showText();
+    QProcess::execute(ansysPath, QStringList() << "-g" << "-dir" << prjDirPath);
     QMessageBox::information(this, tr("Done"), tr("Computing completely."));
 }
 
@@ -494,7 +491,7 @@ void platform::on_coldHotTranfer() {
         apdl_file.close();
     }
 
-    QProcess::execute(icemPath, QStringList()<<"-b"<<"-p"<<"ane3fl"<<"-i"<<
+    QProcess::execute(ansysPath, QStringList()<<"-b"<<"-p"<<"ane3fl"<<"-i"<<
                       apdl_new<<"-o"<<(tr("RES_") + modelName + tr(".txt"))
                       );
     canvas->showText();
