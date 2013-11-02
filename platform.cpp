@@ -10,12 +10,13 @@
 #include "addition/addi.h"
 #define TEMP(fileName) ( C(prjDirPath + tr("/") + tr(fileName)) )
 #define RES(fix)  ( C(prjDirPath + tr("/") + modelName + tr(fix)))
-
+#define REQUIRE_ANSYS_AND_ICEM  if (!path_is_set_or_warning()) return;
 
 platform::platform(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::platform),
-    configFile(tr("/path.conf"))
+    configFile(tr("/path.conf")),
+    flow_file_prompt(1)
 {
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("utf8"));
     load_path_from_file();
@@ -23,7 +24,6 @@ platform::platform(QWidget *parent) :
     ui_init();
     ui_set_contraints();
     ui_connect_function();
-
 }
 
 platform::~platform()
@@ -120,6 +120,7 @@ void platform::ui_connect_function(){
     connect(computeDataGenerate, SIGNAL(clicked()), this, SLOT(on_computeDataGenerate()));
     connect(geoDataGenerate, SIGNAL(clicked()), this, SLOT(on_geoDataGenerate()));
     connect(getLoadBoundary, SIGNAL(clicked()), this, SLOT(on_getLoadBoundary()));
+    connect(loadInterpCompute, SIGNAL(clicked()), this, SLOT(on_loadInterpCompute()));
 }
 
 void platform::closeEvent(QCloseEvent *){
@@ -254,7 +255,9 @@ void platform::save_project_file() {
     if (file.open(QIODevice::WriteOnly|QIODevice::Text)) {
         QTextStream fout(&file);
         fout.setCodec(code);
-        fout << icem_file << endl;
+        fout << tr("ICEM_FILE =") << icem_file << endl;
+        fout << tr("FLOW_FILE =") << flow_file << endl;
+        fout << tr("FLOW_FILE_PROMPT =") << flow_file_prompt << endl;
         file.close();
     }
 }
@@ -265,7 +268,9 @@ void platform::read_project_file() {
     if (file.open(QIODevice::ReadOnly)) {
         QTextStream fin(&file);
         fin.setCodec(code);
-        icem_file = fin.readLine();
+        icem_file = fin.readLine().split('=').back();
+        flow_file = fin.readLine().split('=').back();
+        flow_file_prompt = fin.readLine().split("=").back().toInt();
         modelName = icem_file.split('/').back().split('.').front();
         file.close();
     }
@@ -313,8 +318,8 @@ char* platform::C(QString s){
 
 void platform::on_computeDataGenerate()
 {
-    if (!path_is_set_or_warning())
-        return;
+    REQUIRE_ANSYS_AND_ICEM
+
     qDebug() << "icem_file: " << icem_file;
     //it don't need to check whether it is empty.
     //otherwise we cannot change the icem_file if choosen.
@@ -342,8 +347,8 @@ void platform::on_computeDataGenerate()
 }
 
 void platform::on_geoDataGenerate(){
-    if (!path_is_set_or_warning())
-        return;
+    REQUIRE_ANSYS_AND_ICEM
+
     qDebug() << "geoDataGenerate()";
 
     if (modelName.isEmpty()) {
@@ -421,3 +426,37 @@ void platform::on_getLoadBoundary() {
     QMessageBox::information(this, QString(), R("载荷边界提取完成"));
 }
 
+void platform::on_loadInterpCompute() {
+    qDebug() << "on_loadInterpComput()...";
+    qDebug() << flow_file;
+    if (flow_file.isEmpty() || !QFile(flow_file).exists()) {
+        if (QMessageBox::information(this, tr("information"),R("计算前需要设置流场源文件(flow.txt)\n点击确认进行设置。"))){
+            QString fileName = QFileDialog::getOpenFileName(this, R("流场源文件"), prjDirPath, tr("All (*.*)"));
+            if (!fileName.isEmpty()) {
+                flow_file = fileName;
+            }
+            else return;
+        }
+    }
+    else if (flow_file_prompt) {
+        QMessageBox msgBox(QMessageBox::Warning, R("是否重新设置"),
+                           R("您已经设置过流场源文件，是否重新设置？"),
+                           0, this);
+        msgBox.addButton(R("是"), QMessageBox::AcceptRole);
+        msgBox.addButton(R("否"), QMessageBox::RejectRole);
+        msgBox.addButton(R("不再提示"), QMessageBox::DestructiveRole);
+        int ret = msgBox.exec();
+        if (ret == QMessageBox::AcceptRole) {
+            QString fileName = QFileDialog::getOpenFileName(this, R("流场源文件"), flow_file, tr("Alll (*.*)"));
+            if (!fileName.isEmpty())
+                flow_file = fileName;
+        }
+        else if (ret == QMessageBox::DestructiveRole) {
+            flow_file_prompt = 0;
+        }
+    }
+
+    loadcal(C(flow_file), TEMP("surf.txt"), RES(".load"));
+
+    QMessageBox::information(this, tr("completed"), R("载荷插值计算完成"));
+}

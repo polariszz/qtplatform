@@ -317,7 +317,7 @@ void search(double* x,P_n nlist,double** data,int num)
     }
 }
 
-void localcal(char *file1, char* file2, char* file3) {
+void loadcal(char *file1, char* file2, char* file3) {
     FILE *fp1, *fp2, *fpw;
     node nlist[N];
     double *info,x[3];
@@ -353,4 +353,8 @@ void localcal(char *file1, char* file2, char* file3) {
     }
     rewind(fpw);
     fprintf(fpw,"%d",t);
+    fclose(fpw);
+    int k = 0;
+    for (int i =0; i < 1000000000; i++)
+        k = i + 2;
 }

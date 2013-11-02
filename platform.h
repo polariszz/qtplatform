@@ -33,6 +33,7 @@ private slots:
     void on_computeDataGenerate();
     void on_geoDataGenerate();
     void on_getLoadBoundary();
+    void on_loadInterpCompute();
 
 //private methods
 private:
@@ -82,6 +83,8 @@ private:
 
     QString icem_file;
     QString modelName;
+    QString flow_file;
+    int flow_file_prompt;
 };
 
 #endif // PLATFORM_H
