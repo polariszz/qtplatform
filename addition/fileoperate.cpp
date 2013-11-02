@@ -354,7 +354,4 @@ void loadcal(char *file1, char* file2, char* file3) {
     rewind(fpw);
     fprintf(fpw,"%d",t);
     fclose(fpw);
-    int k = 0;
-    for (int i =0; i < 1000000000; i++)
-        k = i + 2;
 }

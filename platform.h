@@ -34,6 +34,7 @@ private slots:
     void on_geoDataGenerate();
     void on_getLoadBoundary();
     void on_loadInterpCompute();
+    void on_coldHotTranfer();
 
 //private methods
 private:

@@ -10,7 +10,7 @@
 #include "addition/addi.h"
 #define TEMP(fileName) ( C(prjDirPath + tr("/") + tr(fileName)) )
 #define RES(fix)  ( C(prjDirPath + tr("/") + modelName + tr(fix)))
-#define REQUIRE_ANSYS_AND_ICEM  if (!path_is_set_or_warning()) return;
+#define REQUIRE_ANSYS_AND_ICEM  if (!path_is_set_or_warning()) {return;}
 
 platform::platform(QWidget *parent) :
     QMainWindow(parent),
@@ -121,6 +121,7 @@ void platform::ui_connect_function(){
     connect(geoDataGenerate, SIGNAL(clicked()), this, SLOT(on_geoDataGenerate()));
     connect(getLoadBoundary, SIGNAL(clicked()), this, SLOT(on_getLoadBoundary()));
     connect(loadInterpCompute, SIGNAL(clicked()), this, SLOT(on_loadInterpCompute()));
+    connect(coldHotTranfer, SIGNAL(clicked()), this, SLOT(on_coldHotTranfer()));
 }
 
 void platform::closeEvent(QCloseEvent *){
@@ -455,8 +456,46 @@ void platform::on_loadInterpCompute() {
             flow_file_prompt = 0;
         }
     }
-
+    canvas->showComputing();
     loadcal(C(flow_file), TEMP("surf.txt"), RES(".load"));
-
     QMessageBox::information(this, tr("completed"), R("载荷插值计算完成"));
+    canvas->showText();
+}
+
+void platform::on_coldHotTranfer() {
+    qDebug() << "on_coldHotTranfer...";
+    REQUIRE_ANSYS_AND_ICEM ;
+
+    QFile para_file(qApp->applicationDirPath() + tr("/local/parameters.txt"));
+    if (!para_file.exists() && !QFile(prjDirPath+tr("/parameters.txt")).exists()) {
+        QMessageBox::critical(this, tr("Error"), R("文件local/parameters.txt 没有找到。"));
+        return;
+    }
+    para_file.copy(prjDirPath + tr("/parameters.txt"));
+    QFile apdl_file(qApp->applicationDirPath() + tr("/local/APDL.txt"));
+    QString apdl_new = prjDirPath + tr("/") + modelName + tr("_APDL.txt");
+    if (!apdl_file.exists()) {
+        QMessageBox::critical(this, tr("Error"), R("文件local/APDL.txt不存在。"));
+        return;
+    }
+    canvas->showComputing();
+    QTextCodec *code = QTextCodec::codecForName("gbk");
+    if (apdl_file.open(QIODevice::ReadOnly)) {
+        QTextStream fin(&apdl_file);
+        fin.setCodec(code);
+
+        QFile file(apdl_new);
+        if (file.open(QIODevice::WriteOnly|QIODevice::Text)) {
+            QTextStream fout(&file);
+            fout.setCodec(code);
+            fout << fin.readAll().replace(tr("MODELNAMEPLACEHOLDER"), modelName);
+            file.close();
+        }
+        apdl_file.close();
+    }
+
+    QProcess::execute(icemPath, QStringList()<<"-b"<<"-p"<<"ane3fl"<<"-i"<<
+                      apdl_new<<"-o"<<(tr("RES_") + modelName + tr(".txt"))
+                      );
+    canvas->showText();
 }
