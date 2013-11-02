@@ -18,14 +18,17 @@ SOURCES += main.cpp\
     mybutton.cpp \
     local.cpp \
     setpathdialog.cpp \
-    addition/fileoperate.cpp
+    addition/fileoperate.cpp \
+    addition/foo.cpp
 
 HEADERS  += platform.h \
     renderarea.h \
     mybutton.h \
     local.h \
     setpathdialog.h \
-    addition/fileoperate.h
+    addition/fileoperate.h \
+    addition/foo.h \
+    addition/addi.h
 
 FORMS    += platform.ui
 

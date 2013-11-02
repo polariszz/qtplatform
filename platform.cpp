@@ -7,7 +7,7 @@
 #include "mybutton.h"
 #include "setpathdialog.h"
 #include "local.h"
-#include "addition/fileoperate.h"
+#include "addition/addi.h"
 #define TEMP(fileName) ( C(prjDirPath + tr("/") + tr(fileName)) )
 #define RES(fix)  ( C(prjDirPath + tr("/") + modelName + tr(fix)))
 
@@ -212,7 +212,7 @@ void platform::generate_path(QString fileName){
         */
         qDebug() << "prjDirPath exists:" << QDir(prjDirPath).exists();
         //qDebug() << "prjResPath exists:" << QDir(prjResPath).exists();
-
+        QDir::setCurrent(prjDirPath);
     }
 }
 
@@ -303,15 +303,6 @@ void platform::on_actionOpen_triggered()
     }
 }
 
-char* WcharToChar(wchar_t* wc)
-{
-    char *m_char;
-    int len= WideCharToMultiByte(CP_ACP,0,wc,wcslen(wc),NULL,0,NULL,NULL);
-    m_char=new char[len+1];
-    WideCharToMultiByte(CP_ACP,0,wc,wcslen(wc),m_char,len,NULL,NULL);
-    m_char[len]='\0';
-    return m_char;
-}
 
 char* platform::C(QString s){
     wchar_t* ret = new wchar_t[s.size()+1];
@@ -322,7 +313,6 @@ char* platform::C(QString s){
 
 void platform::on_computeDataGenerate()
 {
-    QDir::setCurrent(prjDirPath);
     if (!path_is_set_or_warning())
         return;
     qDebug() << "icem_file: " << icem_file;
@@ -352,7 +342,6 @@ void platform::on_computeDataGenerate()
 }
 
 void platform::on_geoDataGenerate(){
-    QDir::setCurrent(prjDirPath);
     if (!path_is_set_or_warning())
         return;
     qDebug() << "geoDataGenerate()";
@@ -406,8 +395,6 @@ void platform::on_geoDataGenerate(){
 }
 
 void platform::on_getLoadBoundary() {
-    QDir::setCurrent(prjDirPath);
-
     QString error = "";
     if (!QFile(prjDirPath + tr("/FIX.txt")).exists())
         error += tr("FIX.txt ");
@@ -433,3 +420,4 @@ void platform::on_getLoadBoundary() {
 
     QMessageBox::information(this, QString(), R("载荷边界提取完成"));
 }
+
