@@ -7,6 +7,9 @@
 #include "mybutton.h"
 #include "setpathdialog.h"
 #include "local.h"
+#include "addition/fileoperate.h"
+#define TEMP(fileName) ( C(prjDirPath + tr("/") + tr(fileName)) )
+#define RES(fix)  ( C(prjDirPath + tr("/") + modelName + tr(fix)))
 
 
 platform::platform(QWidget *parent) :
@@ -116,6 +119,7 @@ void platform::ui_connect_function(){
     connect(setPath, SIGNAL(clicked()), this, SLOT(set_path()));
     connect(computeDataGenerate, SIGNAL(clicked()), this, SLOT(on_computeDataGenerate()));
     connect(geoDataGenerate, SIGNAL(clicked()), this, SLOT(on_geoDataGenerate()));
+    connect(getLoadBoundary, SIGNAL(clicked()), this, SLOT(on_getLoadBoundary()));
 }
 
 void platform::closeEvent(QCloseEvent *){
@@ -196,11 +200,19 @@ void platform::generate_path(QString fileName){
         qlist.pop_back();
         prjPath = qlist.join('/');
         prjDirPath = prjPath + tr("/dir_") + prjName;
+
         if (!QDir(prjDirPath).exists()) {
             QDir(prjPath).mkdir(tr("dir_") + prjName);
         }
+        /*
+        prjResPath = prjPath + tr("/res_") + prjName;
+        if (!QDir(prjResPath).exists()) {
+            QDir(prjPath).mkdir(tr("res_") + prjName);
+        }
+        */
         qDebug() << "prjDirPath exists:" << QDir(prjDirPath).exists();
-        QDir::setCurrent(prjDirPath);
+        //qDebug() << "prjResPath exists:" << QDir(prjResPath).exists();
+
     }
 }
 
@@ -291,17 +303,26 @@ void platform::on_actionOpen_triggered()
     }
 }
 
+char* WcharToChar(wchar_t* wc)
+{
+    char *m_char;
+    int len= WideCharToMultiByte(CP_ACP,0,wc,wcslen(wc),NULL,0,NULL,NULL);
+    m_char=new char[len+1];
+    WideCharToMultiByte(CP_ACP,0,wc,wcslen(wc),m_char,len,NULL,NULL);
+    m_char[len]='\0';
+    return m_char;
+}
 
-
-wchar_t* platform::to_wchar(QString s){
+char* platform::C(QString s){
     wchar_t* ret = new wchar_t[s.size()+1];
     int temp = s.toWCharArray(ret);
     ret[temp] = 0;
-    return ret;
+    return WcharToChar(ret);
 }
 
 void platform::on_computeDataGenerate()
 {
+    QDir::setCurrent(prjDirPath);
     if (!path_is_set_or_warning())
         return;
     qDebug() << "icem_file: " << icem_file;
@@ -331,6 +352,7 @@ void platform::on_computeDataGenerate()
 }
 
 void platform::on_geoDataGenerate(){
+    QDir::setCurrent(prjDirPath);
     if (!path_is_set_or_warning())
         return;
     qDebug() << "geoDataGenerate()";
@@ -381,5 +403,33 @@ void platform::on_geoDataGenerate(){
     p->waitForFinished();
     canvas->showText();
     QMessageBox::information(this, tr("Done"), tr("Computing completely."));
+}
 
+void platform::on_getLoadBoundary() {
+    QDir::setCurrent(prjDirPath);
+
+    QString error = "";
+    if (!QFile(prjDirPath + tr("/FIX.txt")).exists())
+        error += tr("FIX.txt ");
+    if (!QFile(prjDirPath + tr("/surface.txt")).exists())
+        error += tr("surface.txt ");
+    if (!QFile(prjDirPath + tr("/blade.txt")).exists())
+        error += tr("blade.txt ");
+    if (!QFile(prjDirPath + tr("/SYM1.txt")).exists())
+        error += tr("SYM1.txt ");
+    if (!QFile(prjDirPath + tr("/SYM2.txt")).exists())
+        error += tr("SYM2.txt ");
+    if (!error.isEmpty()) {
+        QMessageBox::critical(this, tr("Error"),
+                              R("中间文件") + error + R("未找到\n") + R("请确保已经完正确生成几何数据"));
+        return;
+    }
+    qDebug() << "getLoadBoudary...";
+    qDebug() << (prjDirPath + tr("/FIX.txt"));
+    transfer(TEMP("FIX.txt"), TEMP("FIX_C.txt"), RES(".fix"));
+    transfer(TEMP("surface.txt"), TEMP("surf.txt"), TEMP("surf_num.txt"));
+    transfer(TEMP("blade.txt"), TEMP("blade_c.txt"), RES(".surf"));
+    couple(TEMP("SYM1.txt"), TEMP("SYM2.txt"), RES(".sym"), TEMP("more1.txt"));
+
+    QMessageBox::information(this, QString(), R("载荷边界提取完成"));
 }

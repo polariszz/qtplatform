@@ -32,6 +32,7 @@ private slots:
     void on_actionAbout_triggered();
     void on_computeDataGenerate();
     void on_geoDataGenerate();
+    void on_getLoadBoundary();
 
 //private methods
 private:
@@ -45,7 +46,7 @@ private:
     void setWinTitle();
     void read_project_file();
     void save_project_file();
-    wchar_t* to_wchar(QString);
+    char* C(QString);
     //make sure ansys and icem path is set.
     bool path_is_set_or_warning();
 
@@ -75,6 +76,7 @@ private:
     QString prjPath;
     QString prjFullName;
     QString prjDirPath;
+//    QString prjResPath;
 
     QString recentPrjPath;
 
