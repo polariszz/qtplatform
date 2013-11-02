@@ -324,6 +324,7 @@ void platform::on_computeDataGenerate()
 
             QProcess *p = new QProcess(this);
             p->start(icemPath, QStringList() << icem_file);
+            p->waitForFinished();
             canvas->showText();
         }
     }
@@ -375,7 +376,10 @@ void platform::on_geoDataGenerate(){
     qDebug() << "apdl file generated...";
 
     canvas->showComputing();
-    QProcess::execute(ansysPath, QStringList() << "-g" << "-dir" << prjDirPath);
+    QProcess *p = new QProcess(this);
+    p->start(ansysPath, QStringList() << "-g" << "-dir" << prjDirPath);
+    p->waitForFinished();
     canvas->showText();
     QMessageBox::information(this, tr("Done"), tr("Computing completely."));
+
 }
