@@ -2,6 +2,10 @@
 #define RENDERAREA_H
 
 #include <QtWidgets>
+#include "local.h"
+using namespace ZZ;
+using std::vector;
+
 
 class renderArea : public QWidget{
     Q_OBJECT
@@ -9,21 +13,22 @@ class renderArea : public QWidget{
 public:
     explicit renderArea(QWidget *parent = 0);
 public slots:
-    void setPaintPath(QPainterPath &path);
+    void setPaintPath(VVP*);
     void setRotationAngle(int angle);
 
 protected:
     void paintEvent(QPaintEvent *event);
-
 public:
+    enum {SHOW_TEXT, SHOW_COMPUTING, SHOW_PATH };
     void showText();
     void showPath();
     void showComputing();
+    int getState() const {return state;}
 
 private:
-    enum {SHOW_TEXT, SHOW_COMPUTING, SHOW_PATH };
+
     int state;
-    QPainterPath path;
+    VVP *vvp;
     int rotationAngle;
     void drawText();
     void drawPath();

@@ -3,11 +3,10 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-#include "renderarea.h"
-#include "mybutton.h"
 #include "setpathdialog.h"
-#include "local.h"
 #include "addition/addi.h"
+#include <exception>
+
 #define TEMP(fileName) ( C(prjDirPath + tr("/") + tr(fileName)) )
 #define RES(fix)  ( C(prjDirPath + tr("/") + modelName + tr(fix)))
 #define REQUIRE_ANSYS_AND_ICEM  if (!path_is_set_or_warning()) {return;}
@@ -16,7 +15,8 @@ platform::platform(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::platform),
     configFile(tr("/path.conf")),
-    flow_file_prompt(1)
+    flow_file_prompt(1),
+    mesh_initialized(false)
 {
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("utf8"));
 
@@ -94,9 +94,13 @@ void platform::ui_init(){
     buttonsLayout->setStretch(3, 1);
     buttonsLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
+    path_msg_label = new QLabel();
     canvas = new renderArea(ui->centralWidget);
     QVBoxLayout *renderAreaLayout = new QVBoxLayout;
+    renderAreaLayout->addWidget(path_msg_label);
+    path_msg_label->hide();
     renderAreaLayout->addWidget(canvas);
+    renderAreaLayout->setStretch(1,1);
 
     QHBoxLayout *mainLayout = new QHBoxLayout;
     mainLayout->addLayout(buttonsLayout);
@@ -125,6 +129,10 @@ void platform::ui_connect_function(){
     connect(coldHotTranfer, SIGNAL(clicked()), this, SLOT(on_coldHotTranfer()));
     connect(showResult, SIGNAL(clicked()), this, SLOT(on_showResult()));
     connect(editCutPlane, SIGNAL(clicked()), this, SLOT(on_editCutPlane()));
+    connect(cutPlane, SIGNAL(clicked()), this, SLOT(on_cutPlane()));
+    connect(showCuttingPath, SIGNAL(clicked()), this, SLOT(on_showCuttingPath()));
+    connect(prePath, SIGNAL(clicked()), this, SLOT(on_prePath()));
+    connect(nextPath, SIGNAL(clicked()), this, SLOT(on_nextPath()));
 }
 
 void platform::closeEvent(QCloseEvent *){
@@ -135,8 +143,8 @@ void platform::closeEvent(QCloseEvent *){
 }
 
 void platform::ui_set_contraints(){
-    this->setMaximumWidth(700);
-    this->setMaximumHeight(500);
+    this->setMaximumWidth(800);
+    this->setMaximumHeight(800);
 }
 
 bool platform::path_is_set_or_warning(){
@@ -421,7 +429,7 @@ void platform::on_getLoadBoundary() {
     qDebug() << (prjDirPath + tr("/FIX.txt"));
     transfer(TEMP("FIX.txt"), TEMP("FIX_C.txt"), RES(".fix"));
     transfer(TEMP("surface.txt"), TEMP("surf.txt"), TEMP("surf_num.txt"));
-    transfer(TEMP("blade.txt"), TEMP("blade_c.txt"), RES(".surf"));
+    transfer(TEMP("blade.txt"), TEMP("blade_c.txt"), RES(".sur"));
     couple(TEMP("SYM1.txt"), TEMP("SYM2.txt"), RES(".sym"), TEMP("more1.txt"));
 
     QMessageBox::information(this, QString(), R("载荷边界提取完成"));
@@ -466,6 +474,25 @@ void platform::on_coldHotTranfer() {
     qDebug() << "on_coldHotTranfer...";
     REQUIRE_ANSYS_AND_ICEM ;
 
+    QString error = "";
+    if (!QFile(RES(".xyz")).exists())
+        error += modelName + tr(".xyz ");
+    if (!QFile(RES(".ele")).exists())
+        error += modelName + tr(".ele ");
+    if (!QFile(RES(".sur")).exists())
+        error += modelName + tr(".sur ");
+    if (!QFile(RES(".load")).exists())
+        error += modelName + tr(".load ");
+    if (!QFile(RES(".sym")).exists())
+        error += modelName + tr(".sym ");
+    if (!QFile(RES(".fix")).exists())
+        error += modelName + tr(".fix ");
+    if (!error.isEmpty()) {
+        QMessageBox::critical(this, tr("Error"),
+                              R("中间文件") + error + R("未找到\n") + R("请确保已经完正确生成几何数据"));
+        return;
+    }
+
     QFile para_file(qApp->applicationDirPath() + tr("/local/parameters.txt"));
     if (!para_file.exists() && !QFile(prjDirPath+tr("/parameters.txt")).exists()) {
         QMessageBox::critical(this, tr("Error"), R("文件local/parameters.txt 没有找到。"));
@@ -497,7 +524,9 @@ void platform::on_coldHotTranfer() {
     QProcess::execute(ansysPath, QStringList()<<"-b"<<"-p"<<"ane3fl"<<"-i"<<
                       apdl_new<<"-o"<<(tr("RES_") + modelName + tr(".txt"))
                       );
+    QMessageBox::information(this, QString("completed"), R("冷热态转换计算完成"));
     canvas->showText();
+    mesh_initialized = false;
 }
 
 void platform::on_showResult() {
@@ -532,4 +561,130 @@ void platform::on_editCutPlane() {
     QProcess::execute(editor, QStringList() << prjDirPath + tr("/planes.txt"));
 }
 
+void platform::on_cutPlane() {
+    qDebug() << "on_cutPlane...";
+    QString mesh = RES(".ele");
+    QString pt = RES(".fin");
+    QString planes = TEMP("planes.txt");
 
+    if (!QFile(mesh).exists()) {
+        QMessageBox::critical(this, tr("Error"), R("网格文件不存在，请先生成网格数据"));
+        return;
+    }
+
+    if (!QFile(planes).exists()) {
+        QMessageBox::critical(this, tr("Error"), R("planes.txt文件不存在，请确认已经生成切割平面文件。"));
+        return;
+    }
+    if (canvas->getState() == renderArea::SHOW_PATH){
+        on_showCuttingPath();
+    }
+
+    qDebug() << C(pt) << C(mesh);
+    canvas->showComputing();
+
+    if (!mesh_initialized) {
+        init(C(mesh), C(pt));
+        buildBoundary();
+        buildBoundaryEdge();
+        mesh_initialized = true;
+
+    }
+
+    using namespace std;
+    using namespace ZZ;
+    ifstream input(C(planes));
+    string s;
+    while(input >> s) if(s == "BEGIN:") break;
+    Vec3d o;
+    Vec3d n(0,0,0);
+    data.clear();
+    VecPlane.clear();
+    while(input>>n>>o){
+        if (n == Vec3d(0,0,0))
+            continue;
+        VecPlane.push_back(Vec6d(n[0],n[1],n[2],o[0],o[1],o[2]));
+        planeCross(n,o);
+        VVP vvcp;
+        forit(pit,SplitPoints){
+            VP vcp;
+            forit(it,*pit)
+            {
+                vcp.push_back(pt2d(it->v[0],it->v[1]));
+            }
+            vvcp.push_back(vcp);
+        }
+        data.push_back(vvcp);
+    }
+    QMessageBox::information(this, tr("completed"), R("切割平面完成，点击显示结果进行查看。"));
+    canvas->showText();
+}
+
+void platform::set_path_msg_text() {
+    QString msg = tr("plane ") + QString::number(pit-VecPlane.begin()+1) + tr(": ");
+    for (int i = 0; i < 6; ++i)
+        msg += QString::number((*pit)[i]) + tr(" ");
+    path_msg_label->setText(msg);
+
+}
+
+void platform::on_showCuttingPath() {
+    qDebug() << "on_showCuttingPath...";
+    if (!mesh_initialized) {
+        QMessageBox::critical(this, tr("Warning"), R("未进行网格切割初始化处理，无法显示"));
+        return;
+    }
+
+    if (canvas->getState() == renderArea::SHOW_PATH) {
+        showCuttingPath->setText(R("显示结果"));
+        prePath->hide();
+        nextPath->hide();
+        path_msg_label->hide();
+        canvas->showText();
+    }
+    else {
+        showCuttingPath->setText(R("隐藏结果"));
+        prePath->show();
+        nextPath->show();
+        path_msg_label->show();
+        prePath->setEnabled(false);
+        it = data.begin();
+        pit = VecPlane.begin();
+        canvas->setPaintPath(&(*it));
+        if (it == data.end() || it + 1 == data.end())
+            nextPath->setEnabled(false);
+        else nextPath->setEnabled(true);
+        canvas->showPath();
+        set_path_msg_text();
+    }
+}
+
+void platform::on_prePath() {
+    qDebug() << "on_prePath...";
+    it--;
+    pit--;
+    canvas->setPaintPath(&(*it));
+    if (it == data.begin())
+        prePath->setEnabled(false);
+    else prePath->setEnabled(true);
+
+    if (it+1 == data.end())
+        nextPath->setEnabled(false);
+    else nextPath->setEnabled(true);
+    set_path_msg_text();
+}
+
+void platform::on_nextPath() {
+    qDebug() << "on_nextPath...";
+    it++;
+    pit++;
+    canvas->setPaintPath(&(*it));
+    if (it == data.begin())
+        prePath->setEnabled(false);
+    else prePath->setEnabled(true);
+
+    if (it+1 == data.end())
+        nextPath->setEnabled(false);
+    else nextPath->setEnabled(true);
+    set_path_msg_text();
+}

@@ -19,7 +19,9 @@ SOURCES += main.cpp\
     local.cpp \
     setpathdialog.cpp \
     addition/fileoperate.cpp \
-    addition/foo.cpp
+    addition/foo.cpp \
+    meshfunc/face.cpp \
+    meshfunc/smooth.cpp
 
 HEADERS  += platform.h \
     renderarea.h \
@@ -28,7 +30,11 @@ HEADERS  += platform.h \
     setpathdialog.h \
     addition/fileoperate.h \
     addition/foo.h \
-    addition/addi.h
+    addition/addi.h \
+    meshfunc/face.h \
+    meshfunc/vec.h \
+    meshfunc/smooth.h \
+    meshfunc/Edge.h
 
 FORMS    += platform.ui
 

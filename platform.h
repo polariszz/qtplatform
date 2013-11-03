@@ -3,9 +3,11 @@
 
 #include <QMainWindow>
 #include <QtWidgets>
+#include "meshfunc/smooth.h"
+#include "local.h"
+#include "renderarea.h"
+#include "mybutton.h"
 
-class renderArea;
-class myButton;
 
 namespace Ui {
 class platform;
@@ -23,7 +25,7 @@ public:
 
 public slots:
     void set_path();
-
+    void set_path_msg_text();
 //slots
 private slots:
     void on_actionNew_triggered();
@@ -37,7 +39,10 @@ private slots:
     void on_coldHotTranfer();
     void on_showResult();
     void on_editCutPlane();
-
+    void on_cutPlane();
+    void on_showCuttingPath();
+    void on_prePath();
+    void on_nextPath();
 
 //private methods
 private:
@@ -74,6 +79,7 @@ private:
     QString icemPath;
     QString ansysPath;
     QString proName;
+    QLabel* path_msg_label;
     renderArea* canvas;
     const QString configFile;
 
@@ -89,7 +95,12 @@ private:
     QString modelName;
     QString flow_file;
     int flow_file_prompt;
+    bool mesh_initialized;
 
+    ZZ::VVVP::iterator it;
+    ZZ::VVVP data;
+    std::vector<Vec6d> VecPlane;
+    vector<Vec6d>::iterator pit;
 };
 
 #endif // PLATFORM_H
