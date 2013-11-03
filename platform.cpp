@@ -10,6 +10,9 @@
 #define TEMP(fileName) ( C(prjDirPath + tr("/") + tr(fileName)) )
 #define RES(fix)  ( C(prjDirPath + tr("/") + modelName + tr(fix)))
 #define REQUIRE_ANSYS_AND_ICEM  if (!path_is_set_or_warning()) {return;}
+#define REQUIRE_MODEL if (modelName.isEmpty()) { \
+                         QMessageBox::critical(this, tr("Error"), R("请先生成计算数据。")); \
+                         return; }
 
 platform::platform(QWidget *parent) :
     QMainWindow(parent),
@@ -363,10 +366,8 @@ void platform::on_geoDataGenerate(){
 
     qDebug() << "geoDataGenerate()";
 
-    if (modelName.isEmpty()) {
-        QMessageBox::critical(this, tr("Error"), R("请先生成计算数据。"));
-        return;
-    }
+    REQUIRE_MODEL
+
     QTextCodec *code = QTextCodec::codecForName("gbk");
     QFile ansys_APDL_file(prjDirPath + tr("/") + modelName + tr("_ansys_get.txt"));
 //    if (!ansys_APDL_file.exists()) {
@@ -531,6 +532,10 @@ void platform::on_coldHotTranfer() {
 
 void platform::on_showResult() {
     qDebug() << "on_showResult...";
+    if (!QFile(tr("RES_") + modelName + tr(".txt")).exists()) {
+        QMessageBox::critical(this, tr("Error"), R("没有找到结果文件。"));
+        return;
+    }
     QString emeditor = qApp->applicationDirPath() + tr("/Emeditor/Emeditor.exe");
     QString editor = QFile(emeditor).exists()? emeditor : tr("notepad.exe");
     QProcess *q = new QProcess(this);
