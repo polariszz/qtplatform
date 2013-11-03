@@ -35,6 +35,9 @@ private slots:
     void on_getLoadBoundary();
     void on_loadInterpCompute();
     void on_coldHotTranfer();
+    void on_showResult();
+    void on_editCutPlane();
+
 
 //private methods
 private:
@@ -86,6 +89,7 @@ private:
     QString modelName;
     QString flow_file;
     int flow_file_prompt;
+
 };
 
 #endif // PLATFORM_H

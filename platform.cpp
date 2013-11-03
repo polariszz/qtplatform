@@ -19,6 +19,7 @@ platform::platform(QWidget *parent) :
     flow_file_prompt(1)
 {
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("utf8"));
+
     load_path_from_file();
     ui->setupUi(this);
     ui_init();
@@ -122,6 +123,8 @@ void platform::ui_connect_function(){
     connect(getLoadBoundary, SIGNAL(clicked()), this, SLOT(on_getLoadBoundary()));
     connect(loadInterpCompute, SIGNAL(clicked()), this, SLOT(on_loadInterpCompute()));
     connect(coldHotTranfer, SIGNAL(clicked()), this, SLOT(on_coldHotTranfer()));
+    connect(showResult, SIGNAL(clicked()), this, SLOT(on_showResult()));
+    connect(editCutPlane, SIGNAL(clicked()), this, SLOT(on_editCutPlane()));
 }
 
 void platform::closeEvent(QCloseEvent *){
@@ -496,3 +499,37 @@ void platform::on_coldHotTranfer() {
                       );
     canvas->showText();
 }
+
+void platform::on_showResult() {
+    qDebug() << "on_showResult...";
+    QString emeditor = qApp->applicationDirPath() + tr("/Emeditor/Emeditor.exe");
+    QString editor = QFile(emeditor).exists()? emeditor : tr("notepad.exe");
+    QProcess *q = new QProcess(this);
+    q->start(editor, QStringList() << tr("RES_") + modelName + tr(".txt"));
+}
+
+void platform::on_editCutPlane() {
+    qDebug() << "edit cut plane...";
+    QString emeditor = qApp->applicationDirPath() + tr("/Emeditor/Emeditor.exe");
+    QString editor = QFile(emeditor).exists()? emeditor : tr("notepad.exe");
+
+    QFile planeFile(prjDirPath + tr("/planes.txt"));
+    QTextCodec *code = QTextCodec::codecForName("gbk");
+    if (!planeFile.exists())
+    {
+        if (planeFile.open(QIODevice::WriteOnly|QIODevice::Text)) {
+            QTextStream fout(&planeFile);
+            fout.setCodec(code);
+            fout << R("!请在BEGIN后开始一行编辑切割平面") << endl
+                 << R("!切割平面格式为平面法向加上基准点位置") << endl
+                 << R("!如 1 1 1 0 0 0代表过0 0 0点的法向为1 1 1的平面") << endl
+                 << R("BEGIN:") << endl
+                 << R("1 1 1 0 0 0") << endl;
+            planeFile.close();
+        }
+    }
+
+    QProcess::execute(editor, QStringList() << prjDirPath + tr("/planes.txt"));
+}
+
+
