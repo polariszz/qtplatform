@@ -36,6 +36,7 @@ private slots:
     void on_geoDataGenerate();
     void on_getLoadBoundary();
     void on_loadInterpCompute();
+    void on_generateAndShowAPDL();
     void on_coldHotTranfer();
     void on_showResult();
     void on_editCutPlane();
@@ -43,6 +44,7 @@ private slots:
     void on_showCuttingPath();
     void on_prePath();
     void on_nextPath();
+    void on_showCoordinate();
 
 //private methods
 private:
@@ -68,6 +70,7 @@ private:
     myButton* geoDataGenerate;
     myButton* getLoadBoundary;
     myButton* loadInterpCompute;
+    myButton* generateAndShowAPDL;
     myButton* coldHotTranfer;
     myButton* showResult;
     myButton* editCutPlane;
@@ -75,6 +78,7 @@ private:
     myButton* showCuttingPath;
     myButton* prePath;
     myButton* nextPath;
+    myButton* showCoordinate;
     QList<QPushButton*> btnList;
     QString icemPath;
     QString ansysPath;

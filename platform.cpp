@@ -62,9 +62,11 @@ void platform::ui_init(){
     preProcess->setLayout(preProcessLayout);
 
     QGroupBox* computingModule = new QGroupBox(QStringLiteral("计算模块"));
+    generateAndShowAPDL = new myButton(R("生成并显示APDL"));
     coldHotTranfer = new myButton(QStringLiteral("冷热态转换"));
-    showResult = new myButton(QStringLiteral("显示结果"));
+    showResult = new myButton(QStringLiteral("显示冷态坐标"));
     QVBoxLayout* computModuleLayout = new QVBoxLayout;
+    computModuleLayout->addWidget(generateAndShowAPDL);
     computModuleLayout->addWidget(coldHotTranfer);
     computModuleLayout->addWidget(showResult);
     computingModule->setLayout(computModuleLayout);
@@ -72,7 +74,9 @@ void platform::ui_init(){
     QGroupBox* postProcess = new QGroupBox(QStringLiteral("后处理模块"));
     editCutPlane = new myButton(QStringLiteral("编辑切割平面"));
     cutPlane = new myButton(QStringLiteral("切割光顺处理"));
-    showCuttingPath = new myButton(QStringLiteral("显示结果"));
+    showCuttingPath = new myButton(QStringLiteral("显示切面形状"));
+    showCoordinate = new myButton(R("显示切片坐标"));
+    //TODO 显示切片坐标
     prePath = new myButton(QStringLiteral("Pre"));
     nextPath = new myButton(QStringLiteral("Next"));
     prePath->setFixedWidth(myButton::MINI_WIDTH);
@@ -86,6 +90,7 @@ void platform::ui_init(){
     postProcessLayout->addWidget(editCutPlane);
     postProcessLayout->addWidget(cutPlane);
     postProcessLayout->addWidget(showCuttingPath);
+    postProcessLayout->addWidget(showCoordinate);
     postProcessLayout->addLayout(preNext);
     postProcess->setLayout(postProcessLayout);
 
@@ -115,8 +120,8 @@ void platform::ui_init(){
 
 
     btnList << setPath << computeDataGenerate << geoDataGenerate << getLoadBoundary
-            << loadInterpCompute << coldHotTranfer << showResult << editCutPlane
-            << cutPlane << showCuttingPath;
+            << loadInterpCompute << generateAndShowAPDL <<coldHotTranfer << showResult << editCutPlane
+            << cutPlane << showCuttingPath << showCoordinate;
     foreach (QWidget* w, btnList) {
         if (w != setPath)
             w->setDisabled(true);
@@ -136,6 +141,8 @@ void platform::ui_connect_function(){
     connect(showCuttingPath, SIGNAL(clicked()), this, SLOT(on_showCuttingPath()));
     connect(prePath, SIGNAL(clicked()), this, SLOT(on_prePath()));
     connect(nextPath, SIGNAL(clicked()), this, SLOT(on_nextPath()));
+    connect(generateAndShowAPDL, SIGNAL(clicked()), this, SLOT(on_generateAndShowAPDL()));
+    connect(showCoordinate, SIGNAL(clicked()), this, SLOT(on_showCoordinate()));
 }
 
 void platform::closeEvent(QCloseEvent *){
@@ -471,6 +478,41 @@ void platform::on_loadInterpCompute() {
     canvas->showText();
 }
 
+void platform::on_generateAndShowAPDL() {
+    qDebug() << "generate and show APDL";
+
+    QString apdl_new = prjDirPath + tr("/") + modelName + tr("_APDL.txt");
+    if (!QFile(apdl_new).exists()) {
+        REQUIRE_MODEL ;
+        QFile apdl_file(qApp->applicationDirPath() + tr("/local/APDL.txt"));
+        if (!apdl_file.exists()) {
+            QMessageBox::critical(this, tr("Error"), R("文件local/APDL.txt不存在。"));
+            return;
+        }
+
+        QTextCodec *code = QTextCodec::codecForName("gbk");
+        if (apdl_file.open(QIODevice::ReadOnly)) {
+            QTextStream fin(&apdl_file);
+            fin.setCodec(code);
+
+            QFile file(apdl_new);
+            if (file.open(QIODevice::WriteOnly|QIODevice::Text)) {
+                QTextStream fout(&file);
+                fout.setCodec(code);
+                fout << fin.readAll().replace(tr("MODELNAMEPLACEHOLDER"), modelName);
+                file.close();
+            }
+            apdl_file.close();
+        }
+    }
+
+    QString pspad = qApp->applicationDirPath() + tr("/pspad/pspad.exe");
+    QProcess *p = new QProcess(this);
+    QString editor = QFile(pspad).exists()? pspad : tr("notepad.exe");
+    p->start(editor, QStringList() << apdl_new);
+
+}
+
 void platform::on_coldHotTranfer() {
     qDebug() << "on_coldHotTranfer...";
     REQUIRE_ANSYS_AND_ICEM ;
@@ -493,6 +535,7 @@ void platform::on_coldHotTranfer() {
                               R("中间文件") + error + R("未找到\n") + R("请确保已经完正确生成几何数据"));
         return;
     }
+    QString apdl_new = prjDirPath + tr("/") + modelName + tr("_APDL.txt");
 
     QFile para_file(qApp->applicationDirPath() + tr("/local/parameters.txt"));
     if (!para_file.exists() && !QFile(prjDirPath+tr("/parameters.txt")).exists()) {
@@ -500,27 +543,9 @@ void platform::on_coldHotTranfer() {
         return;
     }
     para_file.copy(prjDirPath + tr("/parameters.txt"));
-    QFile apdl_file(qApp->applicationDirPath() + tr("/local/APDL.txt"));
-    QString apdl_new = prjDirPath + tr("/") + modelName + tr("_APDL.txt");
-    if (!apdl_file.exists()) {
-        QMessageBox::critical(this, tr("Error"), R("文件local/APDL.txt不存在。"));
-        return;
-    }
-    canvas->showComputing();
-    QTextCodec *code = QTextCodec::codecForName("gbk");
-    if (apdl_file.open(QIODevice::ReadOnly)) {
-        QTextStream fin(&apdl_file);
-        fin.setCodec(code);
 
-        QFile file(apdl_new);
-        if (file.open(QIODevice::WriteOnly|QIODevice::Text)) {
-            QTextStream fout(&file);
-            fout.setCodec(code);
-            fout << fin.readAll().replace(tr("MODELNAMEPLACEHOLDER"), modelName);
-            file.close();
-        }
-        apdl_file.close();
-    }
+    canvas->showComputing();
+
 
     QProcess::execute(ansysPath, QStringList()<<"-b"<<"-p"<<"ane3fl"<<"-i"<<
                       apdl_new<<"-o"<<(tr("RES_") + modelName + tr(".txt"))
@@ -539,7 +564,7 @@ void platform::on_showResult() {
     QString emeditor = qApp->applicationDirPath() + tr("/Emeditor/Emeditor.exe");
     QString editor = QFile(emeditor).exists()? emeditor : tr("notepad.exe");
     QProcess *q = new QProcess(this);
-    q->start(editor, QStringList() << tr("RES_") + modelName + tr(".txt"));
+    q->start(editor, QStringList() << RES(".fin"));
 }
 
 void platform::on_editCutPlane() {
@@ -596,6 +621,7 @@ void platform::on_cutPlane() {
 
     }
 
+    QFile cutSurface(TEMP("cut_surface_coordinates.txt"));
     using namespace std;
     using namespace ZZ;
     ifstream input(C(planes));
@@ -605,10 +631,18 @@ void platform::on_cutPlane() {
     Vec3d n(0,0,0);
     data.clear();
     VecPlane.clear();
+    cutSurface.open(QIODevice::WriteOnly|QIODevice::Text);
+    QTextStream fout(&cutSurface);
+    int planeNum = 0;
     while(input>>n>>o){
         if (n == Vec3d(0,0,0))
             continue;
-        VecPlane.push_back(Vec6d(n[0],n[1],n[2],o[0],o[1],o[2]));
+        fout << "plane " << planeNum++ << " :";
+        Vec6d v6d(n[0],n[1],n[2],o[0],o[1],o[2]);
+        for (int i = 0; i < 6; ++i)
+            fout << " " << v6d[i];
+        fout << endl;
+        VecPlane.push_back(v6d);
         planeCross(n,o);
         VVP vvcp;
         forit(pit,SplitPoints){
@@ -620,7 +654,20 @@ void platform::on_cutPlane() {
             vvcp.push_back(vcp);
         }
         data.push_back(vvcp);
+        int size = 0;
+        int count = 1;
+        forit(pit, Split3dPoints){
+            size += (*pit).size();
+        }
+        fout << size << endl;
+        forit(pit, Split3dPoints) {
+            forit(it, *pit) {
+                fout << count++ <<" "<< it->v[0] <<" " << it->v[1]<<" " << it->v[2] << endl;
+            }
+        }
+        fout << endl;
     }
+    cutSurface.close();
     QMessageBox::information(this, tr("completed"), R("切割平面完成，点击显示结果进行查看。"));
     canvas->showText();
 }
@@ -641,14 +688,14 @@ void platform::on_showCuttingPath() {
     }
 
     if (canvas->getState() == renderArea::SHOW_PATH) {
-        showCuttingPath->setText(R("显示结果"));
+        showCuttingPath->setText(R("显示切片形状"));
         prePath->hide();
         nextPath->hide();
         path_msg_label->hide();
         canvas->showText();
     }
     else {
-        showCuttingPath->setText(R("隐藏结果"));
+        showCuttingPath->setText(R("隐藏切片形状"));
         prePath->show();
         nextPath->show();
         path_msg_label->show();
@@ -692,4 +739,18 @@ void platform::on_nextPath() {
         nextPath->setEnabled(false);
     else nextPath->setEnabled(true);
     set_path_msg_text();
+}
+
+void platform::on_showCoordinate() {
+    qDebug() << "on_showCoordinate...";
+    QString file = TEMP("cut_surface_coordinates.txt");
+    if (!QFile(file).exists()) {
+        QMessageBox::information(this, tr("Error"), R("需要先进行切割平面。"));
+        return;
+    }
+
+    QString emeditor = qApp->applicationDirPath() + tr("/Emeditor/Emeditor.exe");
+    QString editor = QFile(emeditor).exists()? emeditor : tr("notepad.exe");
+    QProcess *q = new QProcess(this);
+    q->start(editor, QStringList() << file);
 }

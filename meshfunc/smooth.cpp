@@ -25,6 +25,7 @@ int BdFaceNum=0;
 int SplitPointNum=0;
 //pt *SplitPoints=NULL;
 vector<vector<pt>> SplitPoints;
+vector<vector<pt>> Split3dPoints;
 
 /*
  *	int mesh
@@ -527,8 +528,7 @@ void planeCross(Vec3d n,Vec3d v)
     }
 
 
-
-
+    Split3dPoints = SplitPoints;
 
     //this block of code transform points to 2D
 

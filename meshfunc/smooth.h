@@ -113,6 +113,7 @@ extern string datapath;
 extern int BdPtNum;
 extern int SplitPointNum;
 extern vector<vector<pt>> SplitPoints;
+extern vector<vector<pt>> Split3dPoints;
 
 
 #endif //_SMOOTH_
