@@ -506,9 +506,9 @@ void platform::on_generateAndShowAPDL() {
         }
     }
 
-    QString pspad = qApp->applicationDirPath() + tr("/pspad/pspad.exe");
+    QString emeditor = qApp->applicationDirPath() + tr("/Emeditor/Emeditor.exe");
     QProcess *p = new QProcess(this);
-    QString editor = QFile(pspad).exists()? pspad : tr("notepad.exe");
+    QString editor = QFile(emeditor).exists()? emeditor : tr("notepad.exe");
     p->start(editor, QStringList() << apdl_new);
 
 }
