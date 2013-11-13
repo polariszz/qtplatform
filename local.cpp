@@ -9,7 +9,7 @@ local::local():welcomeInfo1(QStringLiteral("压气机零件冷热态")),
     computingText1(QStringLiteral("计算中...")),
     computingText2(QStringLiteral("请耐心等待...")),
     welcomePen(QPen(Qt::blue, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin)),
-    textFont(QFont(QStringLiteral("华文彩云"), 25, -1, false)),
+    textFont(QFont(QStringLiteral("华文彩云"), 30, -1, false)),
     computingFont(QFont(QStringLiteral("宋体"), 30, -1, false)),
     fileFilter(QString("pro Files (*.pro)"))
 {

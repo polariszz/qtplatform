@@ -19,10 +19,10 @@ platform::platform(QWidget *parent) :
     ui(new Ui::platform),
     configFile(tr("/path.conf")),
     flow_file_prompt(1),
-    mesh_initialized(false)
+    mesh_initialized(false),
+    pspad(qApp->applicationDirPath() + tr("/pspad/pspad.exe"))
 {
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("utf8"));
-
     load_path_from_file();
     ui->setupUi(this);
     ui_init();
@@ -37,12 +37,15 @@ platform::~platform()
 
 void platform::on_actionAbout_triggered()
 {
+    /*
     QString aboutMsg = tr(" Title   :\tQt Computing Platform \n") +
             tr("Author:\tpolariszz \n") +
             tr("Code  :\thttps://github.com/polariszz/qtplatform \n\n") +
             tr("If you have any question or suggestion about this platform, feel free to contact me by ") +
             tr("beijixing266@gmail.com . :)");
-
+    */
+    QString aboutMsg = R("北京大学工学院力学与工程科学系\n") +
+            R("指导老师： 孙树立");
     QMessageBox::about(this, QStringLiteral("关于..."), aboutMsg);
 }
 
@@ -389,18 +392,19 @@ void platform::on_geoDataGenerate(){
             //read and replace
             QTextStream in(&apdl_local);
             in.setCodec(code);
-            QString script = in.readAll().replace(tr("MODELNAMEPLACEHOLDER"), modelName);
-            apdl_local.close();
 
             //writing file.
             if (ansys_APDL_file.open(QIODevice::WriteOnly|QIODevice::Text)) {
 
                 QTextStream fout(&ansys_APDL_file);
                 fout.setCodec(code);
-                fout << script;
-                fout.flush();
+                while (!in.atEnd()){
+                    QString t = in.readLine().replace("MODELNAMEPLACEHOLDER", modelName);
+                    fout << t << endl;
+                }
                 ansys_APDL_file.close();
             }
+            apdl_local.close();
         }
         else {
             QMessageBox::critical(this, tr("Error: open file"),
@@ -411,9 +415,28 @@ void platform::on_geoDataGenerate(){
     }
     qDebug() << "apdl file generated...";
 
+    QString in_file = RES(".in");
+    if (!QFile(in_file).exists()) {
+        QMessageBox::information(this, R("指定Ansys输入文件"), R("未在工程目录下找到Ansys输入文件(myPrj.in)，请指定。"));
+        QString fileName = QFileDialog::getOpenFileName(this,
+                                                        QStringLiteral("Ansys输入文件*.in"),
+                                                        icem_file,
+                                                        tr("in Files (*.in)"));
+        if (fileName.isEmpty()){
+            return;
+        }
+        else {
+            QFile(fileName).copy(in_file);
+        }
+    }
+
     canvas->showComputing();
-    QProcess::execute(ansysPath, QStringList() << "-g" << "-dir" << prjDirPath);
+
+    QProcess::execute(ansysPath, QStringList()<< "-i" <<
+                      prjDirPath + tr("/") + modelName + tr("_ansys_get.txt"));
+    //QProcess::execute(ansysPath, QStringList() << "-g" << "-dir" << prjDirPath);
     QMessageBox::information(this, tr("Done"), tr("Computing completely."));
+    canvas->showText();
 }
 
 void platform::on_getLoadBoundary() {
@@ -490,7 +513,7 @@ void platform::on_generateAndShowAPDL() {
             return;
         }
 
-        QTextCodec *code = QTextCodec::codecForName("gbk");
+        QTextCodec *code = QTextCodec::codecForName("GBK");
         if (apdl_file.open(QIODevice::ReadOnly)) {
             QTextStream fin(&apdl_file);
             fin.setCodec(code);
@@ -499,16 +522,18 @@ void platform::on_generateAndShowAPDL() {
             if (file.open(QIODevice::WriteOnly|QIODevice::Text)) {
                 QTextStream fout(&file);
                 fout.setCodec(code);
-                fout << fin.readAll().replace(tr("MODELNAMEPLACEHOLDER"), modelName);
+                while (!fin.atEnd()){
+                    QString t = fin.readLine().replace("MODELNAMEPLACEHOLDER", modelName);
+                    fout << t << endl;
+                }
                 file.close();
             }
             apdl_file.close();
         }
     }
 
-    QString emeditor = qApp->applicationDirPath() + tr("/Emeditor/Emeditor.exe");
     QProcess *p = new QProcess(this);
-    QString editor = QFile(emeditor).exists()? emeditor : tr("notepad.exe");
+    QString editor = QFile(pspad).exists()? pspad : tr("notepad.exe");
     p->start(editor, QStringList() << apdl_new);
 
 }
@@ -561,16 +586,14 @@ void platform::on_showResult() {
         QMessageBox::critical(this, tr("Error"), R("没有找到结果文件。"));
         return;
     }
-    QString emeditor = qApp->applicationDirPath() + tr("/Emeditor/Emeditor.exe");
-    QString editor = QFile(emeditor).exists()? emeditor : tr("notepad.exe");
+    QString editor = QFile(pspad).exists()? pspad : tr("notepad.exe");
     QProcess *q = new QProcess(this);
     q->start(editor, QStringList() << RES(".fin"));
 }
 
 void platform::on_editCutPlane() {
     qDebug() << "edit cut plane...";
-    QString emeditor = qApp->applicationDirPath() + tr("/Emeditor/Emeditor.exe");
-    QString editor = QFile(emeditor).exists()? emeditor : tr("notepad.exe");
+    QString editor = QFile(pspad).exists()? pspad : tr("notepad.exe");
 
     QFile planeFile(prjDirPath + tr("/planes.txt"));
     QTextCodec *code = QTextCodec::codecForName("gbk");
@@ -749,8 +772,7 @@ void platform::on_showCoordinate() {
         return;
     }
 
-    QString emeditor = qApp->applicationDirPath() + tr("/Emeditor/Emeditor.exe");
-    QString editor = QFile(emeditor).exists()? emeditor : tr("notepad.exe");
+    QString editor = QFile(pspad).exists()? pspad : tr("notepad.exe");
     QProcess *q = new QProcess(this);
     q->start(editor, QStringList() << file);
 }

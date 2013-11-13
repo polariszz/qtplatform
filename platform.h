@@ -105,6 +105,8 @@ private:
     ZZ::VVVP data;
     std::vector<Vec6d> VecPlane;
     vector<Vec6d>::iterator pit;
+
+    QString pspad;
 };
 
 #endif // PLATFORM_H
