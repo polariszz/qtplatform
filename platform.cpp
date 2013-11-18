@@ -432,8 +432,9 @@ void platform::on_geoDataGenerate(){
 
     canvas->showComputing();
 
-    QProcess::execute(ansysPath, QStringList()<< "-i" <<
-                      prjDirPath + tr("/") + modelName + tr("_ansys_get.txt"));
+    QProcess::execute(ansysPath, QStringList()<< <<"-b" << "-i" <<
+                      prjDirPath + tr("/") + modelName + tr("_ansys_get.txt")
+                      << "-o" << "log.txt");
     //QProcess::execute(ansysPath, QStringList() << "-g" << "-dir" << prjDirPath);
     QMessageBox::information(this, tr("Done"), tr("Computing completely."));
     canvas->showText();
