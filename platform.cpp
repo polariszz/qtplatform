@@ -32,6 +32,7 @@ platform::platform(QWidget *parent) :
 
 platform::~platform()
 {
+    ClearMemory();
     delete ui;
 }
 
