@@ -422,6 +422,7 @@ void planeCross(Vec3d n,Vec3d v)
     Vec4d plane(n[0],n[1],n[2],-dot(n,v));
     SplitPointNum=0;
     SplitPoints.clear();
+    Split3dPoints.clear();
 
     for(int i=0;i<BdEdgeNum;i++)
         EdgePlaneCross(i,plane);

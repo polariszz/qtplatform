@@ -432,7 +432,7 @@ void platform::on_geoDataGenerate(){
 
     canvas->showComputing();
 
-    QProcess::execute(ansysPath, QStringList()<< <<"-b" << "-i" <<
+    QProcess::execute(ansysPath, QStringList()<<"-b" << "-i" <<
                       prjDirPath + tr("/") + modelName + tr("_ansys_get.txt")
                       << "-o" << "log.txt");
     //QProcess::execute(ansysPath, QStringList() << "-g" << "-dir" << prjDirPath);
