@@ -8,6 +8,9 @@ renderArea::renderArea(QWidget *parent) :
 {
     this->setMinimumWidth(350);
     rotationAngle = 0;
+    QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(update()));
+    timer->start(1000);
 }
 
 void renderArea::setRotationAngle(int angle){
@@ -32,9 +35,14 @@ void renderArea::drawText(){
     QRect r = this->rect();
     QRect top(r.left(), r.top(), r.width(), r.height()/4*3);
     QRect bottom(r.left(), r.top() + r.height()/6, r.width(), r.height()/4*3);
+    int w = r.width(), h = r.height();
+    QRect dateRegion(r.left(), r.top()+h*5/6, w, h/6);
+    QString date = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
     painter.drawText(top, Qt::AlignHCenter|Qt::AlignVCenter ,LOCAL()->welcomeInfo1);
     painter.drawText(bottom, Qt::AlignHCenter|Qt::AlignVCenter, LOCAL()->welcomeInfo2);
-
+    painter.setPen(QPen(Qt::black, 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.setFont(QFont(R("宋体"), 12, -1, false));
+    painter.drawText(dateRegion, Qt::AlignHCenter|Qt::AlignVCenter, date);
 }
 
 void renderArea::drawComputing(){
