@@ -31,7 +31,7 @@ void renderArea::drawText(){
     painter.setFont(LOCAL()->textFont);
     QRect r = this->rect();
     QRect top(r.left(), r.top(), r.width(), r.height()/4*3);
-    QRect bottom(r.left(), r.top()+r.height()/4, r.width(), r.height()/4*3);
+    QRect bottom(r.left(), r.top() + r.height()/6, r.width(), r.height()/4*3);
     painter.drawText(top, Qt::AlignHCenter|Qt::AlignVCenter ,LOCAL()->welcomeInfo1);
     painter.drawText(bottom, Qt::AlignHCenter|Qt::AlignVCenter, LOCAL()->welcomeInfo2);
 
