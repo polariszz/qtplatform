@@ -32,32 +32,35 @@ void transfer(char* file1, char* file2, char* file3) {
         printf("Can not open this file !\n");
         return;
         }
-    fprintf(fpw,"        /n");
-    fprintf(fpw1,"        /n");
-    fgets(name,300,fp1);
-    fgets(name,300,fp1);
-    fgets(name,300,fp1);
-    fgets(name,300,fp1);
+    fprintf(fpw,"        /n");//留空用来重写总数
+    fprintf(fpw1,"        /n");//同上
+    for (i=0;i<3;i++)
+      {
+        fgets(name,300,fp1);
+      }
     num=0;
-    while( !feof( fp1 ) ) {
-        for (i = 0; i < 9; i++) {
-            fgets(name, 300, fp1);
-            }
-        for (i = 0; i < 50; i++) {
-            if (feof(fp1))
-                break;
-            fscanf(fp1, "%d", &n);
-            fscanf(fp1, "%lf", &x);
-            fscanf(fp1, "%lf", &y);
-            fscanf(fp1, "%lf\n", &z);
-            fprintf(fpw,"%8d%16.8e%16.8e%16.8e\n",n,x,y,z);
-            fprintf(fpw1,"%d\n",n);
+    while( !feof( fp1 ) )
+      {
+        for (i=0;i<10;i++)
+          {
+            fgets(name,300,fp1);
+          }
+        for(i=0;i<50;i++)
+          {
+            if(feof( fp1 ))
+              break;
+            fscanf(fp1,"%d",&n);
+            fscanf(fp1,"%lf",&x);
+            fscanf(fp1,"%lf",&y);
+            fscanf(fp1,"%lf\n",&z);
+            fprintf(fpw,"%8d%16.8e%16.8e%16.8e\n",n,x,y,z);//输出节点号和坐标
+            fprintf(fpw1,"%d\n",n);//只输出节点号
             num++;
-            }
-        }
+          }
+      }
     rewind(fpw);
     rewind(fpw1);
-    fprintf(fpw,"%8d\n",num);
+    fprintf(fpw,"%8d\n",num);//总数
     fprintf(fpw1,"%8d\n",num);
     fclose(fp1);
     fclose(fpw1);
@@ -88,32 +91,36 @@ void couple(char *file1, char *file2, char *file3, char *file4) {
         printf("Can not open this file! \n");
         return;
         }
-
     fprintf(fpw,"        /n");
     fprintf(fpw1,"        /n");
-    fgets(name,300,fp1);
-    fgets(name,300,fp1);
-    fgets(name,300,fp1);
-    fgets(name,300,fp1);
-    fgets(name,300,fp2);
-    fgets(name,300,fp2);
-    fgets(name,300,fp2);
-    fgets(name,300,fp2);
+    for (i=0;i<3;i++)
+      {
+        fgets(name,300,fp1);
+      }
+    for (i=0;i<3;i++)
+      {
+        fgets(name,300,fp2);
+      }
     num1=0;
     num2=0;
-    while(!feof(fp1)){
-        for (i = 0; i < 9; i++){
-            fgets(name, 300, fp1);
-            }
-        if (!feof(fp2)){
-            for (i=0;i<9;i++)
-                fgets(name,300,fp2);
-            }
-        for(i=0;i<50;i++)
+    while(!feof(fp1))
+      {
+        for (i=0;i<10;i++)
+          {
+            fgets(name,300,fp1);
+          }
+        if (!feof(fp2))//文件2节点数小于文件文件1
+        {
+          for (i=0;i<10;i++)
             {
+              fgets(name,300,fp2);
+            }
+        }
+        for(i=0;i<50;i++)//根据ANSYS Nlist命令输出格式读取数据
+          {
             if (!feof(fp2))
-                {
-                fscanf(fp1,"%d ",&n);
+              {
+                fscanf(fp1,"%d",&n);
                 fscanf(fp1,"%lf",&x);
                 fscanf(fp1,"%lf",&y);
                 fscanf(fp1,"%lf\n",&z);
@@ -124,23 +131,23 @@ void couple(char *file1, char *file2, char *file3, char *file4) {
                 fscanf(fp2,"%lf\n",&z);
                 fprintf(fpw,"%d\n",n);
                 num1++;
-                }
+              }
             else
-                {
+              {
                 if (feof(fp1))
-                    {
+                  {
                     break;
-                    }
+                  }
                 fscanf(fp1,"%d",&n);
                 fscanf(fp1,"%lf",&x);
                 fscanf(fp1,"%lf",&y);
                 fscanf(fp1,"%lf\n",&z);
                 fprintf(fpw1,"%d\n",n);
                 num2++;
-                }
-            }
-        }
 
+              }
+          }
+      }
     rewind(fpw);
     rewind(fpw1);
     fprintf(fpw,"%8d\n",num1);
